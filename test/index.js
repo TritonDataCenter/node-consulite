@@ -106,3 +106,29 @@ describe('getService()', () => {
     });
   });
 });
+
+describe('refreshServices()', () => {
+  it('retrieves services from consul and caches them', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([
+        { Service: { Address: 'refresh1.com', Port: '1234' } },
+        { Service: { Address: 'refresh2.com', Port: '1234' } }
+      ]));
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/refresh');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      Consulite.refreshService('refresh', (err, services) => {
+        expect(err).to.not.exist();
+        expect(services.length).to.equal(2);
+        done();
+      });
+    });
+  });
+});

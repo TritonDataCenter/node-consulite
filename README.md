@@ -36,7 +36,7 @@ Makes a request to consul for the given service name and caches the results. Onl
 services that are healthy are cached.
 
 * `name`: the service name to fetch from consul.
-* `callback`: function with signature `(err)`
+* `callback`: function with signature `(err, services)`
 
 
 ## Example Usage
