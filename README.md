@@ -15,6 +15,10 @@ instance to connect to.
 
 ### getService(name, callback)
 
+Get service address information from cache or from consul. When multiple service
+instances are registered with consul the first instance that hasn't been executed
+or the oldest executed service is returned.
+
 * `name`: the service name registered with consul. If no services are found
 then an error will be returned to the callback. If multiple services are found
 then the service that hasn't been executed or hasn't been executed most recently
@@ -25,6 +29,14 @@ the following properties:
   - `address`: the host address where the service is located
   - `port`: the port that the service is exposed on
 
+
+### refreshService(name, callback)
+
+Makes a request to consul for the given service name and caches the results. Only
+services that are healthy are cached.
+
+* `name`: the service name to fetch from consul.
+* `callback`: function with signature `(err)`
 
 
 ## Example Usage
