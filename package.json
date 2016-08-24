@@ -1,0 +1,31 @@
+{
+  "name": "consulite",
+  "version": "1.0.0",
+  "description": "Tiny consul Node.js module for client discovery",
+  "main": "lib/index.js",
+  "scripts": {
+    "lint": "belly-button",
+    "pretest": "npm run lint",
+    "test": "lab -c -a code",
+    "test-cov-html": "lab -r html -o coverage.html -a code"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geek/consulite.git"
+  },
+  "keywords": [],
+  "author": "Wyatt Preul",
+  "license": "Mozilla Public License 2.0",
+  "bugs": {
+    "url": "https://github.com/geek/consulite/issues"
+  },
+  "homepage": "https://github.com/geek/consulite#readme",
+  "devDependencies": {
+    "belly-button": "3.x.x",
+    "code": "3.x.x",
+    "lab": "11.x.x"
+  },
+  "dependencies": {
+    "wreck": "9.x.x"
+  }
+}
