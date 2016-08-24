@@ -1,5 +1,5 @@
 # consulite
-Tiny consul Node.js module for client discovery
+Tiny consul Node.js module for client discovery with round-robin support
 
 [![Npm Version](https://img.shields.io/npm/v/consulite.svg)](https://npmjs.com/package/consulite)
 [![Node Version](https://img.shields.io/node/v/consulite.svg)](https://npmjs.com/package/consulite)
