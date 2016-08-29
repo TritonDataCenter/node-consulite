@@ -148,6 +148,7 @@ describe('getCachedService()', () => {
     server.listen(0, () => {
       wreck.once('request', (uri, options) => {
         expect(uri.path).to.contain('/cached');
+        expect(uri.protocol).to.equal('http:');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
       });
