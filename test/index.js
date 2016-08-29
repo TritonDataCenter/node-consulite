@@ -15,11 +15,38 @@ const expect = Code.expect;
 const wreck = process[Symbol.for('wreck')];
 
 
+describe('config()', () => {
+  it('sets the consul address then uses it for requests to consul', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([
+        { Service: { Address: 'configured.com', Port: '1234' } },
+        { Service: { Address: 'configured.com', Port: '1234' } }
+      ]));
+    });
+
+    server.listen(0, () => {
+      Consulite.config({ consul: `http://localhost:${server.address().port}` });
+
+      Consulite.getService('configured', (err, service) => {
+        expect(err).to.not.exist();
+        expect(service.address).to.equal('configured.com');
+        Consulite.config({});
+        done();
+      });
+    });
+  });
+});
+
 describe('getService()', () => {
   it('returns service host information from consul', (done) => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([{ Service: { Address: 'foo.com', Port: '1234' } }]));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
     });
 
     server.listen(0, () => {
@@ -106,6 +133,42 @@ describe('getService()', () => {
     });
   });
 });
+
+
+describe('getCachedService()', () => {
+  it('retrieves service from cache', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([
+        { Service: { Address: 'cached.com', Port: '1234' } },
+        { Service: { Address: 'cached.com', Port: '1234' } }
+      ]));
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/cached');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      Consulite.refreshService('cached', (err, services) => {
+        expect(err).to.not.exist();
+        expect(services.length).to.equal(2);
+        const cached = Consulite.getCachedService('cached');
+        expect(cached).to.equal(services[0]);
+        done();
+      });
+    });
+  });
+
+  it('returns empty array when the service isn\'t cached', (done) => {
+    const cached = Consulite.getCachedService('notfound');
+    expect(cached).to.equal(null);
+    done();
+  });
+});
+
 
 describe('refreshServices()', () => {
   it('retrieves services from consul and caches them', (done) => {

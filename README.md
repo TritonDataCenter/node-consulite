@@ -7,10 +7,16 @@ Tiny consul Node.js module for client discovery with round-robin support
 
 ## API
 
-Consulite uses the following environment variables to determine the consul
-instance to connect to.
+The consul instance to connect to can be configured either through the `config()`
+function or through the following environment variables:
 * `CONSUL_HOST`: defaults to 'consul'
 * `CONSUL_PORT`: defaults to 8500
+
+
+### config(config)
+
+Configure consulite with any of the following settings
+* `consul` - the base URL to use to connect to consul
 
 
 ### getService(name, callback)
@@ -30,6 +36,11 @@ the following properties:
   - `port`: the port that the service is exposed on
 
 
+### getCachedService(name)
+
+Get the next service from the cache if it exists, otherwise return null;
+
+
 ### refreshService(name, callback)
 
 Makes a request to consul for the given service name and caches the results. Only
@@ -44,6 +55,27 @@ services that are healthy are cached.
 ```js
 const Consulite = require('consulite');
 const Wreck = require('wreck');
+
+Consulite.getService('users', (err, service) {
+  if (err) {
+    console.error(err);
+    return;
+  }
+
+  Wreck.get(`http://${service.address}:${service.port}/users`, (err, res, payload) => {
+    // handle error and do something with results
+  });
+});
+```
+
+If you want to set the consul address to use and don't want to depend on
+environment variables you can use the `config()` function as demonstrated below:
+
+```js
+const Consulite = require('consulite');
+const Wreck = require('wreck');
+
+Consulite.config({ consul: 'http://myconsul.com' });
 
 Consulite.getService('users', (err, service) {
   if (err) {
