@@ -26,6 +26,7 @@
     "lab": "11.x.x"
   },
   "dependencies": {
-    "wreck": "9.x.x"
+    "wreck": "9.x.x",
+    "or-promise": "1.x.x"
   }
 }

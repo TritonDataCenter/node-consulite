@@ -19,7 +19,7 @@ Configure consulite with any of the following settings
 * `consul` - the base URL to use to connect to consul
 
 
-### getService(name, callback)
+### getService(name [, callback])
 
 Get service address information from cache or from consul. When multiple service
 instances are registered with consul the first instance that hasn't been executed
@@ -35,19 +35,23 @@ the following properties:
   - `address`: the host address where the service is located
   - `port`: the port that the service is exposed on
 
+This function returns a `Promise` if no `callback` is provided.
+
 
 ### getCachedService(name)
 
 Get the next service from the cache if it exists, otherwise return null;
 
 
-### refreshService(name, callback)
+### refreshService(name [, callback])
 
 Makes a request to consul for the given service name and caches the results. Only
 services that are healthy are cached.
 
 * `name`: the service name to fetch from consul.
 * `callback`: function with signature `(err, services)`
+
+This function returns a `Promise` if no `callback` is provided.
 
 
 ## Example Usage

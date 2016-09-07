@@ -65,6 +65,31 @@ describe('getService()', () => {
     });
   });
 
+  it('returns a promise when no callback is provided', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([{ Service: { Address: 'promise.com', Port: '1234' } }]));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/promise');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      Consulite.getService('promise').then((service) => {
+        expect(service.address).to.equal('promise.com');
+        expect(service.port).to.equal('1234');
+        done();
+      });
+    });
+  });
+
   it('round robins the returned services from consul', (done) => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -190,6 +215,29 @@ describe('refreshServices()', () => {
 
       Consulite.refreshService('refresh', (err, services) => {
         expect(err).to.not.exist();
+        expect(services.length).to.equal(2);
+        done();
+      });
+    });
+  });
+
+  it('returns a promise when no callback is provided', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([
+        { Service: { Address: 'refresh-promise1.com', Port: '1234' } },
+        { Service: { Address: 'refresh-promise2.com', Port: '1234' } }
+      ]));
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/refresh-promise');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      Consulite.refreshService('refresh-promise').then((services) => {
         expect(services.length).to.equal(2);
         done();
       });
