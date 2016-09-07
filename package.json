@@ -11,15 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/geek/consulite.git"
+    "url": "git+https://github.com/joyent/node-consulite.git"
   },
   "keywords": [],
   "author": "Wyatt Preul",
   "license": "MPL-2.0",
   "bugs": {
-    "url": "https://github.com/geek/consulite/issues"
+    "url": "https://github.com/joyent/node-consulite/issues"
   },
-  "homepage": "https://github.com/geek/consulite#readme",
+  "homepage": "https://github.com/joyent/node-consulite#readme",
   "devDependencies": {
     "belly-button": "3.x.x",
     "code": "3.x.x",
