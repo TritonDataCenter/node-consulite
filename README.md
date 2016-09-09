@@ -3,7 +3,7 @@ Tiny consul Node.js module for client discovery with round-robin support
 
 [![Npm Version](https://img.shields.io/npm/v/consulite.svg)](https://npmjs.com/package/consulite)
 [![Node Version](https://img.shields.io/node/v/consulite.svg)](https://npmjs.com/package/consulite)
-[![Build Status](https://secure.travis-ci.org/geek/consulite.svg)](http://travis-ci.org/geek/consulite)
+[![Build Status](https://secure.travis-ci.org/joyent/node-consulite.svg)](http://travis-ci.org/joyent/node-consulite)
 
 ## API
 
