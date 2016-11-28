@@ -193,6 +193,43 @@ describe('getCachedService()', () => {
     expect(cached).to.equal(null);
     done();
   });
+
+  it('round-robins the services for each execution', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([
+        { Service: { Address: 'cached1.com', Port: '1234' } },
+        { Service: { Address: 'cached2.com', Port: '1234' } },
+        { Service: { Address: 'cached3.com', Port: '1234' } }
+      ]));
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/roundrobin');
+        expect(uri.protocol).to.equal('http:');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      Consulite.config({ consul: `http://localhost:${server.address().port}` });
+      Consulite.getService('roundrobin', (err, service) => {
+        expect(err).to.not.exist();
+        expect(service.address).to.equal('cached1.com');
+        expect(Consulite.getCachedService('roundrobin').address).to.equal('cached2.com');
+        expect(Consulite.getCachedService('roundrobin').address).to.equal('cached3.com');
+        setImmediate(() => {
+          expect(Consulite.getCachedService('roundrobin').address).to.equal('cached1.com');
+          expect(Consulite.getCachedService('roundrobin').address).to.equal('cached2.com');
+          expect(Consulite.getCachedService('roundrobin').address).to.equal('cached3.com');
+          expect(Consulite.getCachedService('roundrobin').address).to.equal('cached1.com');
+          expect(Consulite.getCachedService('roundrobin').address).to.equal('cached2.com');
+          expect(Consulite.getCachedService('roundrobin').address).to.equal('cached3.com');
+          done();
+        });
+      });
+    });
+  });
 });
 
 

@@ -22,7 +22,7 @@
   "homepage": "https://github.com/joyent/node-consulite#readme",
   "devDependencies": {
     "belly-button": "3.x.x",
-    "code": "3.x.x",
+    "code": "4.x.x",
     "lab": "11.x.x"
   },
   "dependencies": {
