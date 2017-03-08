@@ -159,6 +159,78 @@ describe('getService()', () => {
   });
 });
 
+describe('getServiceHosts()', () => {
+  it('returns service hosts from consul', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([
+        { Service: { Address: 'foo1.com', Port: '1234' } },
+        { Service: { Address: 'foo2.com', Port: '1234' } }
+      ]));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      Consulite.config({ consul: `http://localhost:${server.address().port}` });
+
+      Consulite.getServiceHosts('foobar', (err, hosts) => {
+        expect(err).to.not.exist();
+        expect(hosts.length).to.equal(2);
+        expect(hosts[0].address).to.equal('foo1.com');
+        expect(hosts[1].address).to.equal('foo2.com');
+        Consulite.config({});
+        done();
+      });
+    });
+  });
+
+  it('returns a promise when no callback is provided', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([
+        { Service: { Address: 'foo1.com', Port: '1234' } },
+        { Service: { Address: 'foo2.com', Port: '1234' } }
+      ]));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      Consulite.config({ consul: `http://localhost:${server.address().port}` });
+
+      Consulite.getServiceHosts('foobar').then((hosts) => {
+        expect(hosts.length).to.equal(2);
+        expect(hosts[0].address).to.equal('foo1.com');
+        expect(hosts[1].address).to.equal('foo2.com');
+        Consulite.config({});
+        done();
+      });
+    });
+  });
+
+  it('returns error when unable to find services', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200);
+      res.end();
+    });
+
+    server.listen(0, () => {
+      Consulite.config({ consul: `http://localhost:${server.address().port}` });
+
+      Consulite.getServiceHosts('invalid', (err) => {
+        expect(err).to.exist();
+        Consulite.config({});
+        done();
+      });
+    });
+  });
+});
+
 
 describe('getCachedService()', () => {
   it('retrieves service from cache', (done) => {
@@ -229,6 +301,37 @@ describe('getCachedService()', () => {
         });
       });
     });
+  });
+});
+
+
+describe('getCachedServiceHosts()', () => {
+  it('retrieves service from cache', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([
+        { Service: { Address: 'cached.com', Port: '1234' } },
+        { Service: { Address: 'cached.com', Port: '1234' } }
+      ]));
+    });
+
+    server.listen(0, () => {
+      Consulite.config({ consul: `http://localhost:${server.address().port}` });
+
+      Consulite.refreshService('wat', (err, services) => {
+        expect(err).to.not.exist();
+        expect(services.length).to.equal(2);
+        const cached = Consulite.getCachedServiceHosts('wat');
+        expect(cached.length).to.equal(2);
+        expect(cached).to.equal(services);
+        done();
+      });
+    });
+  });
+
+  it('returns null if not cached', (done) => {
+    expect(Consulite.getCachedServiceHosts('no-good-service')).to.equal(null);
+    done();
   });
 });
 
