@@ -38,9 +38,30 @@ the following properties:
 This function returns a `Promise` if no `callback` is provided.
 
 
+### getServiceHosts(name [, callback])
+
+Get an array of all service instances from cache or from consul.
+
+* `name`: the service name registered with consul. If no services are found
+then an error will be returned to the callback.
+
+* `callback`: function with the signature `(err, hosts)` where `hosts` is an
+array of objects with the following properties:
+  - `address`: the host address where the service is located
+  - `port`: the port that the service is exposed on
+
+This function returns a `Promise` if no `callback` is provided.
+
+
 ### getCachedService(name)
 
 Get the next service from the cache if it exists, otherwise return null;
+
+
+### getCachedServiceHosts(name)
+
+Get an array of all service instances from the cache if it exists, otherwise 
+null.
 
 
 ### refreshService(name [, callback])
