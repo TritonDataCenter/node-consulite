@@ -1,6 +1,6 @@
 {
   "name": "consulite",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Tiny consul Node.js module for client discovery",
   "main": "lib/index.js",
   "scripts": {
