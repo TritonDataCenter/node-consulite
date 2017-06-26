@@ -2,7 +2,6 @@
 
 // Load modules
 const Http = require('http');
-const Code = require('code');
 const Lab = require('lab');
 const Consulite = require('../');
 
@@ -11,7 +10,7 @@ const Consulite = require('../');
 const lab = exports.lab = Lab.script();
 const describe = lab.describe;
 const it = lab.it;
-const expect = Code.expect;
+const expect = lab.expect;
 const wreck = process[Symbol.for('wreck')];
 
 
@@ -32,6 +31,91 @@ describe('config()', () => {
         expect(err).to.not.exist();
         expect(service.address).to.equal('configured.com');
         Consulite.config({});
+        done();
+      });
+    });
+  });
+});
+
+describe('getServiceNames()', () => {
+  it('returns all service names from consul', (done) => {
+    const serviceResponse = {
+      consul: [],
+      containerpilot: [ 'op' ],
+      'cp-frontend': [
+        'traefik.frontend.entryPoints=http,ws,wss',
+        'traefik.backend=cp-frontend',
+        'traefik.frontend.rule=PathPrefix:/'
+      ],
+      foo: [
+        'traefik.backend=api',
+        'traefik.frontend.rule=PathPrefixStrip:/api',
+        'traefik.frontend.entryPoints=http'
+      ],
+      traefik: []
+    };
+
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(serviceResponse));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/services');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      Consulite.getServiceNames((err, services) => {
+        expect(err).to.not.exist();
+        expect(services.length).to.equal(5);
+        expect(services).to.contain('foo');
+        done();
+      });
+    });
+  });
+
+  it('returns all service names from consul with a promise', (done) => {
+    const serviceResponse = {
+      consul: [],
+      containerpilot: [ 'op' ],
+      'cp-frontend': [
+        'traefik.frontend.entryPoints=http,ws,wss',
+        'traefik.backend=cp-frontend',
+        'traefik.frontend.rule=PathPrefix:/'
+      ],
+      foo: [
+        'traefik.backend=api',
+        'traefik.frontend.rule=PathPrefixStrip:/api',
+        'traefik.frontend.entryPoints=http'
+      ],
+      traefik: []
+    };
+
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(serviceResponse));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/services');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      Consulite.getServiceNames().then((services) => {
+        expect(services.length).to.equal(5);
+        expect(services).to.contain('foo');
         done();
       });
     });

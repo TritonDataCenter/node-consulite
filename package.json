@@ -22,11 +22,10 @@
   "homepage": "https://github.com/joyent/node-consulite#readme",
   "devDependencies": {
     "belly-button": "3.x.x",
-    "code": "4.x.x",
-    "lab": "11.x.x"
+    "lab": "14.x.x"
   },
   "dependencies": {
-    "wreck": "10.x.x",
+    "wreck": "12.x.x",
     "or-promise": "1.x.x"
   }
 }

@@ -19,6 +19,15 @@ Configure consulite with any of the following settings
 * `consul` - the base URL to use to connect to consul
 
 
+### getServiceNames([, callback])
+
+Get all service names from consul, regardless of health status.
+
+* `callback`: function with the signature `(err, services)` where `services` is an array of service names.
+
+This function returns a `Promise` if no `callback` is provided.
+
+
 ### getService(name [, callback])
 
 Get service address information from cache or from consul. When multiple service
@@ -60,7 +69,7 @@ Get the next service from the cache if it exists, otherwise return null;
 
 ### getCachedServiceHosts(name)
 
-Get an array of all service instances from the cache if it exists, otherwise 
+Get an array of all service instances from the cache if it exists, otherwise
 null.
 
 
