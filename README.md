@@ -28,6 +28,26 @@ Get all service names from consul, regardless of health status.
 This function returns a `Promise` if no `callback` is provided.
 
 
+### getServiceStatus(name, [, callback])
+
+Get all nodes for the service and include their health status.
+
+* `callback`: function with the signature `(err, nodes)` where `nodes` is an array of node data, which is formatted with the properties shown in the example below.
+
+```
+[
+  {
+    node: 'foobar',
+    address: '10.1.10.12',
+    port: 8000,
+    status: 'passing'
+  }
+]
+```
+
+This function returns a `Promise` if no `callback` is provided.
+
+
 ### getService(name [, callback])
 
 Get service address information from cache or from consul. When multiple service

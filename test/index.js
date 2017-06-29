@@ -122,6 +122,66 @@ describe('getServiceNames()', () => {
   });
 });
 
+describe('getServiceStatus()', () => {
+  it('returns all nodes for service with health status', (done) => {
+    const serviceResponse = [
+      {
+        Node: {
+          ID: '40e4a748-2192-161a-0510-9bf59fe950b5',
+          Node: 'foobar',
+          Address: '10.1.10.12'
+        },
+        Service: {
+          ID: 'redis',
+          Service: 'redis',
+          Address: '10.1.10.12',
+          Port: 8000
+        },
+        Checks: [
+          {
+            Node: 'foobar',
+            CheckID: 'service:redis',
+            Name: 'Service \'redis\' check',
+            Status: 'passing',
+            ServiceName: 'redis'
+          },
+          {
+            Node: 'foobar',
+            CheckID: 'serfHealth',
+            Name: 'Serf Health Status',
+            Status: 'failure',
+            ServiceName: ''
+          }
+        ]
+      }
+    ];
+
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(serviceResponse));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('redis');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      Consulite.getServiceStatus('redis', (err, nodes) => {
+        expect(err).to.not.exist();
+        expect(nodes.length).to.equal(1);
+        expect(nodes[0].status).to.equal('passing');
+        done();
+      });
+    });
+  });
+});
+
 describe('getService()', () => {
   it('returns service host information from consul', (done) => {
     const server = Http.createServer((req, res) => {
