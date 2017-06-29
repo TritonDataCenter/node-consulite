@@ -7,16 +7,14 @@ Tiny consul Node.js module for client discovery with round-robin support
 
 ## API
 
-The consul instance to connect to can be configured either through the `config()`
-function or through the following environment variables:
-* `CONSUL_HOST`: defaults to 'consul'
-* `CONSUL_PORT`: defaults to 8500
 
+### new Consulite(options)
 
-### config(config)
+Create a new instance of the Consulite class. `options` can include the following properties:
 
-Configure consulite with any of the following settings
-* `consul` - the base URL to use to connect to consul
+* `consul` - consul host to connect to. Defaults to either:
+  * `${process.env.CONSUL_HOST}:${process.env.CONSUL_PORT}`
+  * `consul:8500` - as a last resort
 
 
 ### getServiceNames([, callback])
@@ -110,7 +108,8 @@ This function returns a `Promise` if no `callback` is provided.
 const Consulite = require('consulite');
 const Wreck = require('wreck');
 
-Consulite.getService('users', (err, service) {
+const consulite = new Consulite();
+consulite.getService('users', (err, service) {
   if (err) {
     console.error(err);
     return;
@@ -129,9 +128,9 @@ environment variables you can use the `config()` function as demonstrated below:
 const Consulite = require('consulite');
 const Wreck = require('wreck');
 
-Consulite.config({ consul: 'http://myconsul.com' });
+const consulite = new Consulite({ consul: 'http://myconsul.com' });
 
-Consulite.getService('users', (err, service) {
+consulite.getService('users', (err, service) {
   if (err) {
     console.error(err);
     return;
