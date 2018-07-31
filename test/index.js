@@ -376,6 +376,73 @@ describe('getService()', () => {
     });
   });
 
+  it('has default values for passing and near', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([{ Service: { Address: 'promise.com', Port: '1234' } }]));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/promise');
+        expect(uri.query).to.contain('passing=1');
+        expect(uri.query).to.contain('near=agent');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
+      consulite.getService('promise').then((service) => {
+        expect(service.address).to.equal('promise.com');
+        expect(service.port).to.equal('1234');
+        done();
+      });
+    });
+  });
+
+  it('supports tag, nodeMeta, near, and dc', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([{ Service: { Address: 'foo.com', Port: '1234' } }]));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/test');
+        expect(uri.query).to.contain('tag=active');
+        expect(uri.query).to.contain('near=my-house');
+        expect(uri.query).to.contain('node-meta=colour=blue');
+        expect(uri.query).to.contain('dc=prod');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
+      consulite.getService({
+        name: 'test',
+        near: 'my-house',
+        tag: 'active',
+        dc: 'prod',
+        nodeMeta: { colour: 'blue' },
+        callback: (err, service) => {
+          expect(err).to.not.exist();
+          expect(service.address).to.equal('foo.com');
+          expect(service.port).to.equal('1234');
+          done();
+        }
+      });
+    });
+  });
+
+
   it('round robins the returned services from consul', (done) => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
