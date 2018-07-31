@@ -80,6 +80,106 @@ describe('getServiceNames()', () => {
     });
   });
 
+  it('accepts a config object', (done) => {
+    const serviceResponse = {
+      consul: [],
+      containerpilot: [ 'op' ],
+      'cp-frontend': [
+        'traefik.frontend.entryPoints=http,ws,wss',
+        'traefik.backend=cp-frontend',
+        'traefik.frontend.rule=PathPrefix:/'
+      ],
+      foo: [
+        'traefik.backend=api',
+        'traefik.frontend.rule=PathPrefixStrip:/api',
+        'traefik.frontend.entryPoints=http'
+      ],
+      traefik: []
+    };
+
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(serviceResponse));
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/services');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
+      consulite.getServiceNames({callback: (err, services) => {
+        expect(err).to.not.exist();
+        expect(services.length).to.equal(5);
+        expect(services).to.contain('foo');
+        done();
+      }});
+    });
+  });
+
+  it('accepts node-attrs', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{}');
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/services');
+        expect(uri.query).to.contain('node-meta=size=big');
+        expect(uri.query).to.contain('node-meta=colour=brown');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
+      consulite.getServiceNames({nodeMeta: {
+        size: 'big',
+        colour: 'brown'
+      }}).then((services) => {
+        expect(services.length).to.equal(0);
+        done();
+      });
+    });
+  });
+
+
+  it('accepts a datacenter', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{}');
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('/services');
+        expect(uri.query).to.contain('dc=my-dc');
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
+      consulite.getServiceNames({dc: 'my-dc'}).then((services) => {
+        expect(services.length).to.equal(0);
+        done();
+      });
+    });
+  });
+
   it('returns all service names from consul with a promise', (done) => {
     const serviceResponse = {
       consul: [],
