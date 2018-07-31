@@ -282,6 +282,44 @@ describe('getServiceStatus()', () => {
       });
     });
   });
+
+  it('supports nodeMeta, tag, near, and datacenter', (done) => {
+    const server = Http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('[]');
+    });
+
+    server.on('error', (err) => {
+      expect(err).to.not.exist();
+    });
+
+    server.listen(0, () => {
+      wreck.once('request', (uri, options) => {
+        expect(uri.path).to.contain('redis');
+        expect(uri.query).to.contain('node-meta=size=big');
+        expect(uri.query).to.contain('tag=master');
+        expect(uri.query).to.contain('dc=eu-west-1');
+        expect(uri.query).to.contain('near=somenode');
+
+        uri.hostname = 'localhost';
+        uri.port = server.address().port;
+      });
+
+      const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
+      consulite.getServiceStatus({
+        name: 'redis',
+        dc: 'eu-west-1',
+        tag: 'master',
+        near: 'somenode',
+        nodeMeta: {
+          size: 'big'
+        }
+      }).then((nodes) => {
+        expect(nodes.length).to.equal(0);
+        done();
+      });
+    });
+  });
 });
 
 describe('getService()', () => {
