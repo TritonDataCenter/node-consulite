@@ -2,20 +2,19 @@
 
 // Load modules
 const Http = require('http');
-const Lab = require('lab');
+const Code = require('@hapi/code');
+const Lab = require('@hapi/lab');
+const Wreck = require('@hapi/wreck');
 const Consulite = require('../');
 
-
 // Test shortcuts
-const lab = exports.lab = Lab.script();
-const describe = lab.describe;
-const it = lab.it;
-const expect = lab.expect;
-const wreck = process[Symbol.for('wreck')];
+const { expect } = Code;
+const { describe, it } = exports.lab = Lab.script();
+const wreck = Wreck.defaults({ events: true });
 
 
 describe('config()', () => {
-  it('sets the consul address then uses it for requests to consul', (done) => {
+  it('sets the consul address then uses it for requests to consul', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -30,17 +29,16 @@ describe('config()', () => {
       consulite.getService('configured', (err, service) => {
         expect(err).to.not.exist();
         expect(service.address).to.equal('configured.com');
-        done();
       });
     });
   });
 });
 
 describe('getServiceNames()', () => {
-  it('returns all service names from consul', (done) => {
+  it('returns all service names from consul', () => {
     const serviceResponse = {
       consul: [],
-      containerpilot: [ 'op' ],
+      containerpilot: ['op'],
       'cp-frontend': [
         'traefik.frontend.entryPoints=http,ws,wss',
         'traefik.backend=cp-frontend',
@@ -64,7 +62,7 @@ describe('getServiceNames()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/services');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -75,15 +73,14 @@ describe('getServiceNames()', () => {
         expect(err).to.not.exist();
         expect(services.length).to.equal(5);
         expect(services).to.contain('foo');
-        done();
       });
     });
   });
 
-  it('returns all service names from consul with a promise', (done) => {
+  it('returns all service names from consul with a promise', () => {
     const serviceResponse = {
       consul: [],
-      containerpilot: [ 'op' ],
+      containerpilot: ['op'],
       'cp-frontend': [
         'traefik.frontend.entryPoints=http,ws,wss',
         'traefik.backend=cp-frontend',
@@ -107,7 +104,7 @@ describe('getServiceNames()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/services');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -117,14 +114,13 @@ describe('getServiceNames()', () => {
       consulite.getServiceNames().then((services) => {
         expect(services.length).to.equal(5);
         expect(services).to.contain('foo');
-        done();
       });
     });
   });
 });
 
 describe('getServiceStatus()', () => {
-  it('returns all nodes for service with health status', (done) => {
+  it('returns all nodes for service with health status', () => {
     const serviceResponse = [
       {
         Node: {
@@ -167,7 +163,7 @@ describe('getServiceStatus()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('redis');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -178,14 +174,13 @@ describe('getServiceStatus()', () => {
         expect(err).to.not.exist();
         expect(nodes.length).to.equal(1);
         expect(nodes[0].status).to.equal('passing');
-        done();
       });
     });
   });
 });
 
 describe('getService()', () => {
-  it('returns service host information from consul', (done) => {
+  it('returns service host information from consul', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([{ Service: { Address: 'foo.com', Port: '1234' } }]));
@@ -196,7 +191,7 @@ describe('getService()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/test');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -207,12 +202,11 @@ describe('getService()', () => {
         expect(err).to.not.exist();
         expect(service.address).to.equal('foo.com');
         expect(service.port).to.equal('1234');
-        done();
       });
     });
   });
 
-  it('returns a promise when no callback is provided', (done) => {
+  it('returns a promise when no callback is provided', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([{ Service: { Address: 'promise.com', Port: '1234' } }]));
@@ -223,7 +217,7 @@ describe('getService()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/promise');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -233,12 +227,11 @@ describe('getService()', () => {
       consulite.getService('promise').then((service) => {
         expect(service.address).to.equal('promise.com');
         expect(service.port).to.equal('1234');
-        done();
       });
     });
   });
 
-  it('round robins the returned services from consul', (done) => {
+  it('round robins the returned services from consul', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -248,7 +241,7 @@ describe('getService()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/foo');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -266,7 +259,6 @@ describe('getService()', () => {
               consulite.getService('foo', (err, service3) => {
                 expect(err).to.not.exist();
                 expect(service3.address).to.not.equal(service2.address);
-                done();
               });
             });
           });
@@ -275,7 +267,7 @@ describe('getService()', () => {
     });
   });
 
-  it('returns an error when unable to make a connection to consult', (done) => {
+  it('returns an error when unable to make a connection to consult', () => {
     process.env.CONSUL_PORT = '0';
     process.env.CONSUL_HOST = 'localhost';
     const consulite = new Consulite();
@@ -283,18 +275,17 @@ describe('getService()', () => {
       expect(err).to.exist();
       delete process.env.CONSUL_PORT;
       delete process.env.CONSUL_HOST;
-      done();
     });
   });
 
-  it('returns error when unable to find services', (done) => {
+  it('returns error when unable to find services', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200);
       res.end();
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/notfound');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -303,14 +294,13 @@ describe('getService()', () => {
       const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
       consulite.getService('notfound', (err, service) => {
         expect(err).to.exist();
-        done();
       });
     });
   });
 });
 
 describe('getServiceHosts()', () => {
-  it('returns service hosts from consul', (done) => {
+  it('returns service hosts from consul', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -331,12 +321,11 @@ describe('getServiceHosts()', () => {
         expect(hosts.length).to.equal(2);
         expect(hosts[0].address).to.equal('foo1.com');
         expect(hosts[1].address).to.equal('foo2.com');
-        done();
       });
     });
   });
 
-  it('returns a promise when no callback is provided', (done) => {
+  it('returns a promise when no callback is provided', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -356,12 +345,11 @@ describe('getServiceHosts()', () => {
         expect(hosts.length).to.equal(2);
         expect(hosts[0].address).to.equal('foo1.com');
         expect(hosts[1].address).to.equal('foo2.com');
-        done();
       });
     });
   });
 
-  it('returns error when unable to find services', (done) => {
+  it('returns error when unable to find services', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200);
       res.end();
@@ -372,7 +360,6 @@ describe('getServiceHosts()', () => {
 
       consulite.getServiceHosts('invalid', (err) => {
         expect(err).to.exist();
-        done();
       });
     });
   });
@@ -380,7 +367,7 @@ describe('getServiceHosts()', () => {
 
 
 describe('getCachedService()', () => {
-  it('retrieves service from cache', (done) => {
+  it('retrieves service from cache', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -390,7 +377,7 @@ describe('getCachedService()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/cached');
         expect(uri.protocol).to.equal('http:');
         uri.hostname = 'localhost';
@@ -403,19 +390,17 @@ describe('getCachedService()', () => {
         expect(services.length).to.equal(2);
         const cached = consulite.getCachedService('cached');
         expect(cached).to.equal(services[0]);
-        done();
       });
     });
   });
 
-  it('returns empty array when the service isn\'t cached', (done) => {
+  it('returns empty array when the service isn\'t cached', () => {
     const consulite = new Consulite({ consul: 'http://localhost:8080' });
     const cached = consulite.getCachedService('notfound');
     expect(cached).to.equal(null);
-    done();
   });
 
-  it('round-robins the services for each execution', (done) => {
+  it('round-robins the services for each execution', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -426,7 +411,7 @@ describe('getCachedService()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/roundrobin');
         expect(uri.protocol).to.equal('http:');
         uri.hostname = 'localhost';
@@ -446,7 +431,6 @@ describe('getCachedService()', () => {
           expect(consulite.getCachedService('roundrobin').address).to.equal('cached1.com');
           expect(consulite.getCachedService('roundrobin').address).to.equal('cached2.com');
           expect(consulite.getCachedService('roundrobin').address).to.equal('cached3.com');
-          done();
         });
       });
     });
@@ -455,7 +439,7 @@ describe('getCachedService()', () => {
 
 
 describe('getCachedServiceHosts()', () => {
-  it('retrieves service from cache', (done) => {
+  it('retrieves service from cache', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -473,21 +457,19 @@ describe('getCachedServiceHosts()', () => {
         const cached = consulite.getCachedServiceHosts('wat');
         expect(cached.length).to.equal(2);
         expect(cached).to.equal(services);
-        done();
       });
     });
   });
 
-  it('returns null if not cached', (done) => {
+  it('returns null if not cached', () => {
     const consulite = new Consulite({ consul: 'http://localhost:8080' });
     expect(consulite.getCachedServiceHosts('no-good-service')).to.equal(null);
-    done();
   });
 });
 
 
 describe('refreshServices()', () => {
-  it('retrieves services from consul and caches them', (done) => {
+  it('retrieves services from consul and caches them', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -497,7 +479,7 @@ describe('refreshServices()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/refresh');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -507,12 +489,11 @@ describe('refreshServices()', () => {
       consulite.refreshService('refresh', (err, services) => {
         expect(err).to.not.exist();
         expect(services.length).to.equal(2);
-        done();
       });
     });
   });
 
-  it('returns a promise when no callback is provided', (done) => {
+  it('returns a promise when no callback is provided', () => {
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -522,7 +503,7 @@ describe('refreshServices()', () => {
     });
 
     server.listen(0, () => {
-      wreck.once('request', (uri, options) => {
+      wreck.events.once('request', (uri, options) => {
         expect(uri.path).to.contain('/refresh-promise');
         uri.hostname = 'localhost';
         uri.port = server.address().port;
@@ -531,7 +512,6 @@ describe('refreshServices()', () => {
       const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
       consulite.refreshService('refresh-promise').then((services) => {
         expect(services.length).to.equal(2);
-        done();
       });
     });
   });
