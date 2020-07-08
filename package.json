@@ -7,7 +7,7 @@
     "lint": "belly-button",
     "pretest": "npm run lint",
     "test": "lab -c",
-    "test-cov-html": "lab -r html -o coverage.html -a code"
+    "test-cov-html": "lab -r html -o coverage.html"
   },
   "repository": {
     "type": "git",
