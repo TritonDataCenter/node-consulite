@@ -21,9 +21,10 @@
   },
   "homepage": "https://github.com/joyent/node-consulite#readme",
   "devDependencies": {
-    "belly-button": "7.x.x",
     "@hapi/code": "8.x.x",
-    "@hapi/lab": "22.x.x"
+    "@hapi/lab": "22.x.x",
+    "belly-button": "7.x.x",
+    "cb-barrier": "1.0.x"
   },
   "dependencies": {
     "@hapi/wreck": "17.x.x",

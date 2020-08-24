@@ -8,6 +8,7 @@ const Code = require('@hapi/code');
 const Lab = require('@hapi/lab');
 const Wreck = require('@hapi/wreck');
 const Consulite = require('../');
+const Barrier = require('cb-barrier');
 
 // Test shortcuts
 const { expect } = Code;
@@ -16,7 +17,9 @@ const wreck = Wreck.defaults({ events: true });
 
 
 describe('config()', () => {
-  it('sets the consul address then uses it for requests to consul', () => {
+  it('sets the consul address then uses it for requests to consul', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -30,12 +33,16 @@ describe('config()', () => {
 
       const service = await consulite.getService('configured');
       expect(service.address).to.equal('configured.com');
+      barrier.pass();
     });
+
+    await barrier;
   });
 });
 
 describe('getServiceNames()', () => {
-  it('returns all service names from consul', () => {
+  it('returns all service names from consul', async () => {
+    const barrier = new Barrier();
     const serviceResponse = {
       consul: [],
       containerpilot: ['op'],
@@ -72,10 +79,15 @@ describe('getServiceNames()', () => {
       const services = await consulite.getServiceNames();
       expect(services.length).to.equal(5);
       expect(services).to.contain('foo');
+      barrier.pass();
     });
+
+    await barrier;
   });
 
-  it('returns all service names from consul with a promise', () => {
+  it('returns all service names from consul with a promise', async () => {
+    const barrier = new Barrier();
+
     const serviceResponse = {
       consul: [],
       containerpilot: ['op'],
@@ -112,13 +124,18 @@ describe('getServiceNames()', () => {
       consulite.getServiceNames().then((services) => {
         expect(services.length).to.equal(5);
         expect(services).to.contain('foo');
+        barrier.pass();
       });
     });
+
+    await barrier;
   });
 });
 
 describe('getServiceStatus()', () => {
-  it('returns all nodes for service with health status', () => {
+  it('returns all nodes for service with health status', async () => {
+    const barrier = new Barrier();
+
     const serviceResponse = [
       {
         Node: {
@@ -171,12 +188,17 @@ describe('getServiceStatus()', () => {
       const nodes = await consulite.getServiceStatus('redis');
       expect(nodes.length).to.equal(1);
       expect(nodes[0].status).to.equal('passing');
+      barrier.pass();
     });
+
+    await barrier;
   });
 });
 
 describe('getService()', () => {
-  it('returns service host information from consul', () => {
+  it('returns service host information from consul', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([{ Service: { Address: 'foo.com', Port: '1234' } }]));
@@ -197,10 +219,15 @@ describe('getService()', () => {
       const service = await consulite.getService('test');
       expect(service.address).to.equal('foo.com');
       expect(service.port).to.equal('1234');
+      barrier.pass();
     });
+
+    await barrier;
   });
 
-  it('round robins the returned services from consul', () => {
+  it('round robins the returned services from consul', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -225,7 +252,10 @@ describe('getService()', () => {
       await setImmediatePromise();
       const service3 = await consulite.getService('foo');
       expect(service3.address).to.not.equal(service2.address);
+      barrier.pass();
     });
+
+    await barrier;
   });
 
   it('returns an error when unable to make a connection to consult', async () => {
@@ -237,7 +267,9 @@ describe('getService()', () => {
     delete process.env.CONSUL_HOST;
   });
 
-  it('returns error when unable to find services', () => {
+  it('returns error when unable to find services', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200);
       res.end();
@@ -252,12 +284,17 @@ describe('getService()', () => {
 
       const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
       await expect(consulite.getService('notfound')).to.reject();
+      barrier.pass();
     });
+
+    await barrier;
   });
 });
 
 describe('getServiceHosts()', () => {
-  it('returns service hosts from consul', () => {
+  it('returns service hosts from consul', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -277,10 +314,15 @@ describe('getServiceHosts()', () => {
       expect(hosts.length).to.equal(2);
       expect(hosts[0].address).to.equal('foo1.com');
       expect(hosts[1].address).to.equal('foo2.com');
+      barrier.pass();
     });
+
+    await barrier;
   });
 
-  it('returns error when unable to find services', () => {
+  it('returns error when unable to find services', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200);
       res.end();
@@ -290,13 +332,18 @@ describe('getServiceHosts()', () => {
       const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
 
       await expect(consulite.getServiceHosts('invalid')).to.reject();
+      barrier.pass();
     });
+
+    await barrier;
   });
 });
 
 
 describe('getCachedService()', () => {
-  it('retrieves service from cache', () => {
+  it('retrieves service from cache', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -318,7 +365,10 @@ describe('getCachedService()', () => {
       expect(services.length).to.equal(2);
       const cached = consulite.getCachedService('cached');
       expect(cached).to.equal(services[0]);
+      barrier.pass();
     });
+
+    await barrier;
   });
 
   it('returns empty array when the service isn\'t cached', () => {
@@ -327,7 +377,9 @@ describe('getCachedService()', () => {
     expect(cached).to.equal(null);
   });
 
-  it('round-robins the services for each execution', () => {
+  it('round-robins the services for each execution', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -357,13 +409,18 @@ describe('getCachedService()', () => {
       expect(consulite.getCachedService('roundrobin').address).to.equal('cached1.com');
       expect(consulite.getCachedService('roundrobin').address).to.equal('cached2.com');
       expect(consulite.getCachedService('roundrobin').address).to.equal('cached3.com');
+      barrier.pass();
     });
+
+    await barrier;
   });
 });
 
 
 describe('getCachedServiceHosts()', () => {
-  it('retrieves service from cache', () => {
+  it('retrieves service from cache', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -380,7 +437,10 @@ describe('getCachedServiceHosts()', () => {
       const cached = consulite.getCachedServiceHosts('wat');
       expect(cached.length).to.equal(2);
       expect(cached).to.equal(services);
+      barrier.pass();
     });
+
+    await barrier;
   });
 
   it('returns null if not cached', () => {
@@ -391,7 +451,9 @@ describe('getCachedServiceHosts()', () => {
 
 
 describe('refreshServices()', () => {
-  it('retrieves services from consul and caches them', () => {
+  it('retrieves services from consul and caches them', async () => {
+    const barrier = new Barrier();
+
     const server = Http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([
@@ -410,6 +472,9 @@ describe('refreshServices()', () => {
       const consulite = new Consulite({ consul: `http://localhost:${server.address().port}` });
       const services = await consulite.refreshService('refresh');
       expect(services.length).to.equal(2);
+      barrier.pass();
     });
+
+    await barrier;
   });
 });
